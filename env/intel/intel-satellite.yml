@@ -1,0 +1,26 @@
+name: intel-satellite
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - cpuonly=2.0
+  - pillow=9.0.1
+  - pip=21.2.4
+  - python=3.9.12
+  - wheel=0.37.1
+  - torchvision=0.14.0
+
+  - pip:
+    
+    - --extra-index-url https://download.pytorch.org/whl/cpu
+    - torch==1.13.0+cpu 
+    - intel-extension-for-pytorch==1.13.0
+    - matplotlib==3.5.2
+    - neural-compressor==2.0
+    - opencv-python==4.5.5.64
+    - psutil==5.9.1
+    - tqdm==4.64.0
+    - seaborn==0.12.0
+    - pyyaml==5.4.1
+    - numpy==1.23.1
+    - scikit-learn==1.0.2

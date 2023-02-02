@@ -1,0 +1,17 @@
+--Intel-review
+Step 1:
+Please go to the the website mentioned below and get the registration done for download the dataset & once it is approved you will be able to download the below tar files .
+   
+   Download Challenge training set(~7.8 GB)
+   Download Challenge test set(~2.6 GB)
+  
+   train_images_labels_targets.tar
+   test_images_labels_targets.tar
+
+Step 2: 
+Once we get it downloaded execute below to unzip it *inside the data folder*.
+  tar -xvf train_images_labels_targets.tar
+  tar -xvf test_images_labels_targets.tar
+
+Here we go :
+https://xview2.org/dataset 
