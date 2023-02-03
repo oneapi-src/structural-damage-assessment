@@ -2,7 +2,7 @@
 
 ### License
 
-Satellite Image Processing system is licensed under the terms in [LICENSE](https://github.com/oneapi-src/disaster-appraisal/blob/main/LICENSE). By contributing to the project, you agree to the license and copyright terms therein and release your contribution under these terms.
+Satellite Image Processing system is licensed under the terms in [LICENSE](https://github.com/oneapi-src/structural-damage-assessment/blob/main/LICENSE). By contributing to the project, you agree to the license and copyright terms therein and release your contribution under these terms.
 
 ### Sign your work
 
