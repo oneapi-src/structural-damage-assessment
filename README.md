@@ -59,8 +59,8 @@ GPUs are the natural choice for deep learning and AI processing to achieve a hig
 ###  For cloning the repository  please execute below 
 
 ```
-git clone https://github.com/oneapi-src/disaster-appraisal
-cd disaster-appraisal
+git clone https://github.com/oneapi-src/structural-damage-assessment
+cd structural-damage-assessment
 ```
 
 >**Note**: In this reference kit implementation already provides the necessary conda environment configurations to set up the software requirements. To utilize these environment scripts, install Anaconda/Miniconda by following the instructions at the following link<br>[Anaconda installation](https://docs.anaconda.com/anaconda/install/linux/)
