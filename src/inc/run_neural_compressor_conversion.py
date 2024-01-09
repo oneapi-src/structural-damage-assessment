@@ -35,7 +35,7 @@ from neural_compressor.experimental import Quantization, common
 
 def dice_index(input, target):
     '''
-    Calcualtes the Dice Coefficeint for the 2 specified images
+    Calculates the Dice Coefficient for the 2 specified images
 
     Arguments:
     pred  --  The predicted image by the neural network
@@ -54,7 +54,7 @@ def dice_index(input, target):
     
 def IoU(input, target):
     '''
-    Calcualtes the IoU Coefficeint for the 2 specified images
+    Calculates the IoU Coefficient for the 2 specified images
 
     Arguments:
     pred  --  The predicted image by the neural network
@@ -81,7 +81,7 @@ class Dataset:
         Arguments:
         img_root_dir  --  Directory containing the input image files
         gt_root_dir   --  Directory containing the output  files
-        train  --  Variable tto differentiate between traning and test/val for data augmentation and transforms
+        train  --  Variable tto differentiate between training and test/val for data augmentation and transforms
         
         Returns:
         None
@@ -101,7 +101,7 @@ class Dataset:
 
      def __getitem__(self, idx):
         '''
-        Based on the input index, reads a filen and the corresponding target and outputs both as processed tensors to the net
+        Based on the input index, reads a file and the corresponding target and outputs both as processed tensors to the net
         Arguments:
         idx  --  The index of the dataframe row to be loaded
         
@@ -204,16 +204,19 @@ def get_args():
                         default=None,
                         help='give the directory path to save the Quantized model')
    
-   
+    parser.add_argument('--dataset_file',
+                        '--dataset_file',
+                        type=str,
+                        required=True,
+                        default=None,
+                        help='dataset file for training')
     return parser.parse_args()
 
     
 if __name__ == '__main__':
     args = get_args()
 
-    CUDA = torch.cuda.is_available()
-    print("CUDA :: ", CUDA)
-    device = torch.device("cuda" if CUDA else "cpu")
+    device = torch.device("cpu")
 
     # Dataloader
     BATCH = args.batch_size
@@ -221,10 +224,11 @@ if __name__ == '__main__':
     config_path = args.config
     out_path =  args.outpath
     TEST_PATH = args.save_model_path
+    datadir = args.dataset_file
     
 
-    test_label_directory = "./data/test/targets"
-    test_image_directory = "./data/test/images"
+    test_label_directory = datadir + "/test/targets"
+    test_image_directory = datadir + "/test/images"
 
     # Testing Load Path
     print("Loaded_FP32model_path_is",TEST_PATH)

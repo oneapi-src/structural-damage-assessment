@@ -1,91 +1,61 @@
-# Applications of AI in Satellite Image processing instance segmentation using PyTorch
+# Structural Damage Assessment
+
+### An Application of AI in Satellite Image Processing Instance Segmentation Using PyTorch
+
 ## Introduction
-One of the important applications of satellite image processing is in Disaster Management i.e., monitoring natural disasters like earthquakes, hurricanes, tropical cyclones, floods, etc., and assessing the damages. It helps to strategically plan and control disasters as and when they occur. 
-## Table of Contents 
- - [Purpose](#purpose)
- - [Reference Solution](#reference-solution)
- - [Reference Implementation](#reference-implementation)
- - [Intel® Optimized Implementation](#optimizing-the-end-to-end-solution-with-intel%C2%AE-oneapi-components)
- - [Performance Observations](#performance-observations)
+Satellite image processing is an indispensable tool in Disaster Management. It plays a vital role in monitoring and assessing the damages caused by natural disasters such as earthquakes, hurricanes, tropical cyclones, floods, etc. It is the key to planning and controlling disasters in a strategic and effective manner.
 
-## Purpose
-There are vast applications of satellite imaging services in geospatial mapping, disaster management, urban planning, agriculture, military and defense, environmental monitoring and energy management.
+This reference kit leverages Intel® oneAPI to demonstrate the PyTorch-based AI Model that works on satellite-captured images and the AI models developed to help assess the severity of damage caused by a natural disaster.
 
-When a natural disaster (let's say an earthquake) has occurred in an area, a satellite captures various images and collects data for damage assessment and response. Then, satellites downlink the collected images/data when they come within range of ground stations on Earth. Downlinking is limited to a few times a day and only for a few minutes each time depending on the priority, thus limiting the amount of data received and increasing latency to receive the complete data. If the data were to be processed at the ground stations to generate insights, there would be a huge delay between data acquisition at the satellite and response to the insights generated from the data. Additionally, data exchange between satellites and ground stations is expensive.
+Check out more workflow examples in the [Developer Catalog](https://developer.intel.com/aireferenceimplementations).
 
-AI-based technological solutions for satellite image processing have great potential in disaster management and response. Satellite image processing at Edge can create efficacies in processing the data in space, reducing the quantum of data exchange between satellites and ground stations, reducing the latency between data acquisition, insights generation and response.
-Effective disaster management would require predictive insights and real-time information regarding impending/already occurred disasters. This would imply low latency/instantaneous insights on the satellite images.
+## Table of Contents
+- [Solution Technical Overview](#solution-technical-overview)
+- [Solution Technical Details](#solution-technical-details)
+  - [Dataset](#dataset)
+- [Validated Hardware Details](#validated-hardware-details)
+- [How it Works](#how-it-works)
+- [Get Started](#get-started)
+  - [Download the Workflow Repository](#download-the-workflow-repository)
+  - [Set Up Conda](#set-up-conda)
+  - [Set Up Environment](#set-up-environment)
+- [Ways to run this reference use case](#Ways-to-run-this-reference-use-case)
+  - [Run Using Bare Metal](#run-using-bare-metal)
+- [Expected Output](#expected-outputs)
+- [Summary and Next Steps](#summary-and-next-steps)
+- [Learn More](#learn-more)
+- [Support](#support)
+- [Appendix](#appendix)
+
+## Solution Technical Overview
+Satellite imaging services have a wide range of applications in various fields such as geospatial mapping, disaster management, urban planning, agriculture, military and defense, environmental monitoring, and energy management.
+
+When a natural disaster has occurred in an area, such as earthquakes, satellites capture images and collect data to assess damage and plan a response. The collected images and data are downlinked to ground stations on Earth when the satellite comes within range. However, downlinking is limited to a few times a day, for only a few minutes each time, depending on priority. This limits the amount of data received and increases the time it takes to receive the complete data. Processing the data at ground stations to generate insights would result in a significant delay between data acquisition and response. Additionally, exchanging data between satellites and ground stations is expensive.
+
+To address these challenges, AI-based technological solutions for satellite image processing can be used in disaster management and response. Satellite image processing at Edge can reduce the amount of data exchange between satellites and ground stations, as well as the time between data acquisition, insights generation, and response. This can create efficiencies in processing data in space.
+
+To ensure effective disaster management, predictive insights and real-time information on impending or ongoing disasters are required. This means that low latency or instantaneous insights on satellite images are necessary.
+
+The solution contained in this repo uses the following Intel® optimized software components: Intel® Extension for Pytorch\* and Intel® Neural Compressor
+
+### **Optimized software components**
+
+**Intel® Extension for Pytorch\***
+
+The [Intel® Extension for PyTorch\*](https://github.com/intel/intel-extension-for-pytorch/tree/xpu-master) provides:
+  - PyTorch* with up-to-date extended features' optimizations for an extra performance boost on Intel® hardware.
+  - Optimizations take advantage of AVX-512 Vector Neural Network Instructions (AVX512 VNNI) and Intel® Advanced Matrix extensions (Intel® AMX) on Intel® CPUs as well as Intel® Xe Matrix Extensions (XMX) AI engines on Intel® discrete GPUs.
+  - Optimizations for both eager mode and graph mode.
+
+**Intel® Neural Compressor**:
+
+The [Intel® Neural Compressor](https://github.com/intel/neural-compressor) aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as TensorFlow\*, PyTorch*, ONNX Runtime, and MXNet, as well as Intel extensions such as Intel® Extension for TensorFlow\* and Intel® Extension for PyTorch\*.
 
 
-## Reference Solution  
-This reference kit leverages Intel® oneAPI to demonstrate the PyTorch-based AI Model that works on satellite-captured images and the AI models developed to help to assess the severity of damage caused by a natural disaster.
+## Solution Technical Details  
 
-The goal is to segment the buildings from the satellite-captured images and assess the severity of structural damage that occurred to the buildings due to the natural disaster in a particular area. The extent of damage in the buildings is categorized into 4 groups - Normal (No damage), Minor damage, Major damage, and Critical (fully destroyed).
-
-U-Net convolutional neural network architecture has been used to help segment images, captured using onboard imaging devices on satellites targeted for disaster management planning. 
-It is a widely adopted convolutional neural network architecture for fast and precise segmentation of images
-
-The experiment aims to take the image captured by the satellite (xBD dataset) post preprocessing as input and pass it through the instance-segmentation model (U-Net architecture) to accurately recognize the buildings and assess the damage to put in the defined category; then benchmark speed and accuracy of training, inference both (batch and real-time) against Intel’s technology.
-
-GPUs are the natural choice for deep learning and AI processing to achieve a higher Frames Per Second (FPS)   rate, this reference solution uses model quantization to speed up segmentation process  on  CPU based computing platform while maintaining the ideal FPS (for image segmentation applications) to realize a cost-effective option for low power computing platform on Satellites while maintaining the accuracy level   of the prediction similar to regular floating point model.
-
-### **Key Implementation Details**
-
-- The difference between using Intel® oneAPI AI Analytics Toolkit against the stock version has been highlighted in this reference kit. Implementation on Intel® Extension for PyTorch* v1.13.0 has been compared against the stock version of PyTorch v1.12.0.<br>
-- U-Net architecture has been used on the images captured by satellite to assess the severity of structural destruction caused by the disaster. The extent of damage in the buildings is categorized into 4 groups - Normal (No damage), Minor damage, Major damage, and Critical (fully destroyed). The inference time and the model's performance are captured for multiple runs on the stock version and the Intel® oneAPI version.
-- When it comes to the deployment of this model on edge devices, with less computing and memory resources, the experiment applies further quantization and compression to the model whilst keeping the same level of accuracy showing a more efficient utilization of underlying computing resources . Model has been quantized using Intel® Neural Compressor & Intel® Distribution of OpenVINO™ Toolkit, which have shown high-performance vectorized operations on Intel® platforms.
-
-## Reference Implementation
-
-### ***E2E Architecture***
-### **Use Case E2E flow**
-![Use_case_flow](assets/stock-pipeline.png) 
-
-### Expected Input-Output
-
-**Input**                                 | **Output** |
-| :---: | :---: |
-| Satellite captured images           |  Damage severity assessment (Normal (No damage), Minor damage, Major damage, or Critical (fully destroyed)).
-### Reference Sources
-*DataSet*: https://xview2.org/dataset <br>
-
-*Case Study & Repo*:https://github.com/milesial/Pytorch-UNet
-
-### Notes
-***Please see this data set's applicable license for terms and conditions. Intel® Corporation does not own the rights to this data set and does not confer any rights to it.***
-
-### Repository clone and Anaconda installation
-
-###  For cloning the repository  please execute below 
-
-```
-git clone https://github.com/oneapi-src/disaster-appraisal
-cd disaster-appraisal
-```
-
->**Note**: In this reference kit implementation already provides the necessary conda environment configurations to set up the software requirements. To utilize these environment scripts, install Anaconda/Miniconda by following the instructions at the following link<br>[Anaconda installation](https://docs.anaconda.com/anaconda/install/linux/)
-
-## Overview
-### ***Software Requirements***
-| **Package**                | **Stock Python**                
-| :---                       | :---                            
-| OpenCV     | opencv-python=4.5.5.64
-| NumPy               | numpy=1.23.1
-| PyTorch              | torch=1.12.0
-| Intel® Extension for PyTorch         | NA                              
-| Intel® Neural Compressor         | NA                                                      
-
-## Environment
-
-Below are the developer environment used for this module on Azure. All the observations captured are based on this environment setup.
-
-**Size** | **CPU Cores** | **Memory**  | **Intel® CPU Family**
-| :--- | :--: | :--: | :--:
-| *Standard_D8_V5* | 8 | 32GB | ICELAKE
-
-**YAML file**                                 | **Environment Name** |  **Configuration** |
-| :---: | :---: | :---: |
-| `env/stock/stock-satellite.yml`             | `stock-satellite` | Python v3.9 with stock PyTorch v1.12.0
+- U-Net architecture has been used on the images captured by satellite to assess the severity of structural destruction caused by the disaster. The extent of damage in the buildings is categorized into 4 groups - Normal (No damage), Minor damage, Major damage, and Critical (fully destroyed). The inference time and the model's performance are captured for multiple runs on the Intel® oneAPI components.
+- When it comes to the deployment of this model on edge devices, with less computing and memory resources, the experiment applies further quantization and compression to the model whilst keeping the same level of accuracy showing a more efficient utilization of underlying computing resources. Model has been quantized using Intel® Neural Compressor, which has shown high-performance vectorized operations on Intel® platforms.
 
 ### Dataset
 
@@ -97,47 +67,126 @@ Below are the developer environment used for this module on Azure. All the obser
 | **Size** | 1024*1024 <br>
 
 
-### Usage and Instructions
+The following is an example of the images:
 
-Below are the steps to reproduce the benchmarking results given in this repository
-1. Environment Creation
-2. Dataset preparation
-3. Training & Hyperparameter tuning
-4. Model Inference
+**Hurricane Florence** 
 
 
-#### 1. Environment Creation
+| Pre-disaster   |      Post-disaster      |  
+|----------|:-------------:|
+| <img src="assets/hurricane-florence_00000065_pre_disaster.png" width="100%" >  | <img src="assets/hurricane-florence_00000065_post_disaster.png" width="100%" >  | 
 
-**Setting up the environment for Stock PyTorch**<br>Follow the below conda installation commands to set up the Stock PyTorch v1.12.0 environment for the model Training and Hyperparameter Tuning & Inferencing. 
+
+## Validated Hardware Details
+
+Below is the development environment used for this module. All the observations captured are based on this environment setup.
+
+
+**Intel® CPU Family** | **CPU Cores** | **Memory**  | **Precision**
+| :--- | :--: | :--: | :--:
+| 2nd Generation Intel® Xeon® Scalable Processors | 8 | 32GB | FP32, INT8
+
+Code was tested on Ubuntu\* 22.04 LTS.
+
+## How it Works
+
+The objective is to identify and separate buildings from satellite images and determine the amount of damage caused to the structures by natural disasters in a specific region. The level of damage is classified into four groups: Normal (no damage), Minor damage, Major damage, and Critical (fully destroyed).
+
+U-Net convolutional neural network architecture has been used to help segment images, captured using onboard imaging devices on satellites targeted for disaster management planning. 
+It is a widely adopted convolutional neural network architecture for fast and precise segmentation of images
+
+The purpose of the experiment is to take the preprocessed image captured by the satellite (xBD dataset) as input and run it through the instance-segmentation model (U-Net architecture) to precisely identify the buildings and assess the level of damage to categorize it accordingly.
+
+GPUs are the preferred choice for deep learning and AI processing to achieve a higher Frames Per Second (FPS) rate. However, this reference solution uses model quantization to speed up the segmentation process on CPU-based computing platforms while maintaining the ideal FPS (for image segmentation applications) to provide a cost-effective option for low-power computing platforms on satellites while maintaining the accuracy level of the prediction similar to a regular floating-point model.
+
+**Use Case E2E flow**
+![Use_case_flow](assets/intel-pipeline.png)
+
+## Get Started
+
+Start by defining an environment variable that will store the workspace path, these directories will be created in further steps and will be used for all the commands executed using absolute paths.
+
+[//]: # (capture: baremetal)
+```sh
+export WORKSPACE=$PWD/structural-damage-assessment
+export DATA_DIR=$WORKSPACE/data/xBD
+export OUTPUT_DIR=$WORKSPACE/output
+```
+
+### Download the Workflow Repository
+
+Create a working directory for the workflow and clone the [Structural Damage Assessment](https://github.com/oneapi-src/structural-damage-assessment) repository into your working directory.
 
 ```sh
-conda env create -f env/stock/stock-satellite.yml
+mkdir -p $WORKSPACE && cd $WORKSPACE
+git clone https://github.com/oneapi-src/structural-damage-assessment $WORKSPACE
 ```
-*Activate stock conda environment*
 
-Use the following command to activate the environment that was created:
+### Set up Miniconda
+
+1. Download the appropriate Miniconda Installer for linux.
+
+   ```bash
+   wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+   ```
+
+2. In your terminal, run.
+
+   ```bash
+   bash Miniconda3-latest-Linux-x86_64.sh
+   ```
+
+3. Delete downloaded file.
+
+   ```bash
+   rm Miniconda3-latest-Linux-x86_64.sh
+   ```
+
+To learn more about conda installation, see the [Conda Linux installation instructions](https://docs.conda.io/projects/conda/en/stable/user-guide/install/linux.html).
+
+### Set Up Environment
+
+The conda yaml dependencies are kept in `$WORKSPACE/env/intel_env.yml`.
+
+| **Packages required in YAML file:**                 | **Version:**
+| :---                          | :--
+| `python`  | 3.9
+| `intel-aikit-pytorch`  | 2024.0.2
+| `tqdm`  |  4.66.1
+
+
+Follow the next steps to setup the conda environment:
 
 ```sh
-conda activate stock-satellite
+conda env create -f $WORKSPACE/env/intel_env.yml --no-default-packages
+conda activate structural_damage_intel
 ```
-#### 2. Data preparation
 
-> Data extraction steps from tar files are provided inside the data folder in data.txt file.
-<br>Registration is required in order to download the data, and when it has been authorized by the appropriate team, the user can download and use it for benchmarking.
+### Dataset Preparation
 
-<br>The following steps need to be followed after downloading the data:
+**Step 1**: 
+Please go to the the website [https://xview2.org/dataset](https://xview2.org/dataset )  and get the registration done to download the below tar files.
+   
+>Download Challenge training set(~7.8 GB)
 
+>Download Challenge test set(~2.6 GB)
+
+**Step 2**: 
+Once we get it downloaded execute below commands to unzip it *inside the data folder*.
 ```sh
-cd data
-tar -xvf train_images_labels_targets.tar
-tar -xvf test_images_labels_targets.tar
+tar -xvf train_images_labels_targets.tar -C $DATA_DIR
+tar -xvf test_images_labels_targets.tar -C $DATA_DIR
 ```
 
-
-
-<br> Make sure folder structure should look like same as below after unzipping the data tar files .</br>
+The tar files can be removed with the below command:
+```sh
+rm $DATA_DIR/train_images_labels_targets.tar $DATA_DIR/test_images_labels_targets.tar
 ```
-data/
+
+<br> Make sure the folder structure looks the like same as below after unzipping the data tar files .</br>
+
+```
+data/xBD
 └------- train
     ├    ├── images
     │    ├── targets
@@ -148,194 +197,58 @@ data/
          ├── images
          ├── targets
          ├── labels
-        
 ```
 
-#### 3. Training
- Running Training using Stock PyTorch v1.12.0 
-> Activate Stock Environment before running
+## Ways to run this reference use case
 
- ```
- usage: run_modeltraining.py [-h] [--batch_size BATCH_SIZE] --dataset_file DATASET_FILE [-i INTEL] --save_model_path SAVE_MODEL_PATH
+This reference kit offers one option for running the fine-tuning and inference processes:
+
+- [Bare Metal](#run-using-bare-metal)
+
+> **Note**: The performance were tested on Xeon based processors. Some portions of the ref kits may run slower on a client's machine, so utilize the flags supported to modify the epochs/batch size to run the training or inference faster. 
+
+## Run Using Bare Metal
+
+### Set Up and run Workflow
+
+Below are the steps to reproduce the results given in this repository
+
+1. Training model
+1. Hyperparameter tuning
+1. Model Inference
+1. Evaluation accuracy
+1. Quantize trained models using INC
+1. Evaluation accuracy
+
+#### 1. Training
+Running training using Intel® Extension for PyTorch\*
+
+```
+usage: run_modeltraining.py [-h] [--batch_size BATCH_SIZE] --dataset_file DATASET_FILE --save_model_path SAVE_MODEL_PATH
 
 optional arguments:
   -h, --help            show this help message and exit
   --batch_size BATCH_SIZE, --batch_size BATCH_SIZE
-                        batch size exampes: 6, 12
+                        batch size examples: 6, 12
   --dataset_file DATASET_FILE, --dataset_file DATASET_FILE
                         dataset file for training
-  -i INTEL, --intel INTEL
-                        use 1 to enable intel model save, default is 0
   --save_model_path SAVE_MODEL_PATH, --save_model_path SAVE_MODEL_PATH
                         give the directory path to save the model
-                   
- ```
+```
 
 **Command to run training**
+
+[//]: # (capture: baremetal)
 ```sh
-python src/run_modeltraining.py  --batch_size 6  --dataset_file  ./data  --intel 0  --save_model_path  ./model
-```
-By default, trained model will be saved in "model" folder.
-
-#### Hyperparameter tuning
-
-Hyperparameter tuning is important because they directly control the behavior of the training algorithm and have a significant impact on the performance of the model is being trained. The Hyperparameters considered for tuning to reach maximum accuracy on the training set are: - Learning Rate, Epochs, Optimizer, and Batch size.
-
-```
- usage: run_hyperparameter.py [-h] [--batch_size BATCH_SIZE] --dataset_file DATASET_FILE [-i INTEL] --save_model_path SAVE_MODEL_PATH
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --batch_size BATCH_SIZE, --batch_size BATCH_SIZE
-                        batch size exampes: 6, 12
-  --dataset_file DATASET_FILE, --dataset_file DATASET_FILE
-                        dataset file for training
-  -i INTEL, --intel INTEL
-                        use 1 to enable intel PyTorch optimizations, default is 0
-  --save_model_path SAVE_MODEL_PATH, --save_model_path SAVE_MODEL_PATH
-                        give the directory path to save the model
-                      
- ```
- 
-**Hyperparameters used here are as below**
-```
-"learning rates"      : [0.001, 0.00001]
-"optimizers"          : ["Adam", "adadelta", "rmsprop"]
+OMP_NUM_THREADS=4 KMP_BLOCKTIME=50 
+python $WORKSPACE/src/run_modeltraining.py  --batch_size 6  --dataset_file $DATA_DIR --save_model_path  $OUTPUT_DIR/model
 ```
 
-**Command to run Hyperparameter Tuning**
-```sh
-python src/run_hyperparameter.py  --batch_size 6  --dataset_file  ./data  --intel 0  --save_model_path  ./model
-```
-By default, trained model will be saved in "model" folder
+> The trained model will be saved in "$OUTPUT_DIR/model" folder.
 
-#### 4. Inference
+### 2. Hyperparameter tuning
 
- Running inference using Stock PyTorch v1.12. 
-> Activate Stock Environment before running
-
-```
-usage: run_inference.py [-h] [--intel I] [--batch-size B] --save_model_path SAVE_MODEL_PATH --data_path DATA_PATH
-
-Inference on test images with FP32/INT8 model
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --intel I, -i I       Intel Optimizations for pytorch, default value 0
-  --batch-size B, -b B  Batch size
-  --save_model_path SAVE_MODEL_PATH, -m SAVE_MODEL_PATH
-                        give the directory of the trained checkpoint.
-  --data_path DATA_PATH, -d DATA_PATH
-                        give the directory of test data folder.
-  ```
-
-**Command to run inference**
-
-```sh
-
- python src/run_inference.py -i 0 -b 1  --save_model_path ./model/stock/checkpoint.tar  --data_path ./data/test
-
-```
-#### Accuracy evalution of the above  model 
-```
-sage: run_evalution.py [-h] [--intel I] [--batch-size B] --save_model_path SAVE_MODEL_PATH --data_path DATA_PATH [--openvino OPENVINO]
-
-Evaluting Accuracyon test images with FP32/INT8/OPENVINO model
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --intel I, -i I       Intel Optimizations for pytorch, default value 0
-  --batch-size B, -b B  Batch size
-  --save_model_path SAVE_MODEL_PATH, -m SAVE_MODEL_PATH
-                        give the directory of the trained checkpoint
-  --data_path DATA_PATH, -d DATA_PATH
-                        give the directory of the test folder
-  --openvino OPENVINO, -o OPENVINO
-                        please ensble this flag only openvino env
-
-  ```
-
-**Command to execute**
-
-```sh
- python src/run_evalution.py  -i 0  --batch-size 1 --save_model_path ./model/stock/checkpoint.tar  --data_path ./data/test -o 0
-
-```
-
-
-
-## Optimizing the E2E solution with Intel® oneAPI components
-
-### **Use Case E2E flow**
-![Use_case_flow](assets/intel-pipeline.png)
-
-### **Optimized software components**
-| **Package**                | **Intel® Distribution for Python**                
-| :---                       | :---                            
-| Opencv     | opencv-python=4.5.5.64
-| Numpy               | numpy=1.23.1
-| PyTorch              | torch=1.13.x
-| Intel® Extension for PyTorch         | intel-extension-for-pytorch=1.13.0                              
-| Intel® Neural Compressor         | neural-compressor=2.0   
-
-### **Optimized Solution setup**
-
-**YAML file**                                 | **Environment Name** |  **Configuration** |
-| :---: | :---: | :---: |
-`env/intel/intel-satellite.yml`             | `intel-satellite` | Python v3.9 with Intel® Extension for PyTorch v1.13.0 |
-
-### Usage and Instructions
-Below are the steps to reproduce the benchmarking results given in this repository
-1. Environment Creation
-2. Model Training &  Hyperparameter tuning
-3. Model Inference
-4. Quantize trained models using INC and benchmarking
-5. Quantize trained models using Intel® Distribution of OpenVINO™ Toolkit and benchmarking
-
-#### 1. Environment Creation
-
-**Setting up the environment for Intel® Extension for PyTorch**<br>Follow the below conda installation commands to setup the Intel® Extension for PyTorch environment for the model Training and Hyperparameter Tuning & Inferencing.
-```sh
-
-conda env create -f env/intel/intel-satellite.yml
-```
-*Activate Intel® conda environment*
-
-Use the following command to activate the environment that was created:
-
-```sh
-conda activate intel-satellite
-```
->**Note**: Users can use same environment for Quantization using Intel® Neural Compressor.
-
-#### 2. Training
- Running Training using of Intel® Extension for PyTorch v1.13.0
-> Activate Intel Environment before running
-
- ```
-usage: run_modeltraining.py [-h] [--batch_size BATCH_SIZE] --dataset_file DATASET_FILE [-i INTEL] --save_model_path SAVE_MODEL_PATH
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --batch_size BATCH_SIZE, --batch_size BATCH_SIZE
-                        batch size exampes: 6, 12
-  --dataset_file DATASET_FILE, --dataset_file DATASET_FILE
-                        dataset file for training
-  -i INTEL, --intel INTEL
-                        use 1 to enable intel model save, default is 0
-  --save_model_path SAVE_MODEL_PATH, --save_model_path SAVE_MODEL_PATH
-                        give the directory path to save the model
-  
- ```
-**Command to run training**
-```sh
-OMP_NUM_THREADS=4 KMP_BLOCKTIME=50 python src/run_modeltraining.py  --batch_size 6  --dataset_file ./data  --intel 1  --save_model_path  ./model
-```
-By default, trained model will be saved in "model" folder.
-
-###3 Hyperparameter tuning
-
-Hyperparameter tuning is important because they directly control the behavior of the training algorithm and have a significant impact on the performance of the model is being trained. The Hyperparameters considered for tuning to reach maximum accuracy on the training set are: - Learning Rate, Epochs, Optimizer, and Batch size.
+Hyperparameter tuning is important because they directly control the behavior of the training algorithm and have a significant impact on the performance of the model that is being trained. The Hyperparameters considered for tuning to reach maximum accuracy on the training set are: Learning Rate, Epochs, Optimizer, and Batch size.
 
 ```
 usage: run_hyperparameter.py [-h] [--batch_size BATCH_SIZE] --dataset_file DATASET_FILE [-i INTEL] --save_model_path SAVE_MODEL_PATH
@@ -343,32 +256,34 @@ usage: run_hyperparameter.py [-h] [--batch_size BATCH_SIZE] --dataset_file DATAS
 optional arguments:
   -h, --help            show this help message and exit
   --batch_size BATCH_SIZE, --batch_size BATCH_SIZE
-                        batch size exampes: 6, 12
+                        batch size examples: 6, 12
   --dataset_file DATASET_FILE, --dataset_file DATASET_FILE
                         dataset file for training
-  -i INTEL, --intel INTEL
-                        use 1 to enable intel PyTorch optimizations, default is 0
   --save_model_path SAVE_MODEL_PATH, --save_model_path SAVE_MODEL_PATH
                         give the directory path to save the model
-                
- ```
+```
 
 **Hyperparameters used here are as below**
+
 ```
 "learning rates"      : [0.001, 0.00001]
 "optimizers"          : ["Adam", "adadelta", "rmsprop"]
 ```
 
 **Command to run Hyperparameter Tuning**
+
+[//]: # (capture: baremetal)
 ```sh
-OMP_NUM_THREADS=4 KMP_BLOCKTIME=50 python src/run_hyperparameter.py  --batch_size 6  --dataset_file  ./data  --intel 1  --save_model_path  ./model
+OMP_NUM_THREADS=4 KMP_BLOCKTIME=50 
+python $WORKSPACE/src/run_hyperparameter.py  --batch_size 6  --dataset_file  $DATA_DIR  --save_model_path  $OUTPUT_DIR/model
 ```
-By default, trained model will be saved in "model" folder
 
-#### 4. Inference
+> The trained model will be saved in "$OUTPUT_DIR/model" folder.
 
- Running inference using of Intel® Extension for PyTorch  v1.13.0 
-> Activate Intel Environment before running
+#### 3. Inference
+
+Running inference using Intel® Extension for PyTorch\*
+
 ```
 usage: run_inference.py [-h] [--intel I] [--batch-size B] --save_model_path SAVE_MODEL_PATH --data_path DATA_PATH
 
@@ -376,7 +291,6 @@ Inference on test images with FP32/INT8 model
 
 optional arguments:
   -h, --help            show this help message and exit
-  --intel I, -i I       Intel Optimizations for pytorch, default value 0
   --batch-size B, -b B  Batch size
   --save_model_path SAVE_MODEL_PATH, -m SAVE_MODEL_PATH
                         give the directory of the trained checkpoint.
@@ -386,45 +300,41 @@ optional arguments:
 
 **Command to run inference**
 
+[//]: # (capture: baremetal)
+
 ```sh
-
- OMP_NUM_THREADS=4 KMP_BLOCKTIME=50 python src/run_inference.py -i 1 -b 1  --save_model_path ./model/intel/checkpoint.tar  --data_path ./data/test
+ OMP_NUM_THREADS=4 KMP_BLOCKTIME=50 
+ python $WORKSPACE/src/run_inference.py -b 1  --save_model_path $OUTPUT_DIR/model/intel/checkpoint.tar  --data_path $DATA_DIR/test
 
 ```
-#### Accuracy evalution of the above  model 
+#### 4. Accuracy evaluation of the above  model 
 ```
-sage: run_evalution.py [-h] [--intel I] [--batch-size B] --save_model_path SAVE_MODEL_PATH --data_path DATA_PATH [--openvino OPENVINO]
+sage: run_evaluation.py [-h] [--batch-size B] --save_model_path SAVE_MODEL_PATH --data_path DATA_PATH 
 
-Evaluting Accuracyon test images with FP32/INT8/OPENVINO model
+Evaluating Accuracy on test images with FP32/INT8 model
 
 optional arguments:
   -h, --help            show this help message and exit
-  --intel I, -i I       Intel Optimizations for pytorch, default value 0
   --batch-size B, -b B  Batch size
   --save_model_path SAVE_MODEL_PATH, -m SAVE_MODEL_PATH
                         give the directory of the trained checkpoint
   --data_path DATA_PATH, -d DATA_PATH
                         give the directory of the test folder
-  --openvino OPENVINO, -o OPENVINO
-                        please ensble this flag only openvino env
-
   ```
 
 **Command to execute**
 
+[//]: # (capture: baremetal)
+
 ```sh
-
- python src/run_evalution.py  -i 1  --batch-size 1 --save_model_path ./model/intel/checkpoint.tar  --data_path ./data/test -o 0
-
+ python $WORKSPACE/src/run_evaluation.py --batch-size 1 --save_model_path $OUTPUT_DIR/model/intel/checkpoint.tar  --data_path $DATA_DIR/test
 ```
 ### 5. Quantize trained models using Intel® Neural Compressor
 
-Intel® Neural Compressor is used to quantize the FP32 Model to the INT8 Model. Optimized model is used here for evaluating and timing Analysis.
-Intel® Neural Compressor supports many optimization methods.In this case, we used post-training default quantization to quantize the FP32 model.
+Intel® Neural Compressor is used to quantize the FP32 Model to the INT8 Model. Optimized model is used here for evaluating and timing analysis.
+Intel® Neural Compressor supports many optimization methods. In this case, the post-training default quantization is used to quantize the FP32 model.
 
- Activate Intel® Environment before running
-
-Step-1: Conversion of FP32 Model to INT8 Model
+**Step-1**: Conversion of FP32 Model to INT8 Model
 
 ```
 usage: run_neural_compressor_conversion.py [-h] [-i INTELFLAG] [--batch_size B] [-o OUTPATH] [-c CONFIG] --save_model_path SAVE_MODEL_PATH
@@ -436,6 +346,8 @@ optional arguments:
   -i INTELFLAG, --intelflag INTELFLAG
                         For enabling IPEX Optimizations value of i will be 1 but INC it has to be 0
   --batch_size B, -b B  Batch size
+  --dataset_file DATASET_FILE, --dataset_file DATASET_FILE
+                        dataset file for training
   -o OUTPATH, --outpath OUTPATH
                         absolute path to save quantized model. By default it will be saved in "./inc_compressed_model/output" folder
   -c CONFIG, --config CONFIG
@@ -444,211 +356,260 @@ optional arguments:
                         give the directory path to save the Quantized model
 ```
 **Command to run Intel Neural Compressor Quantization**
+
+[//]: # (capture: baremetal)
 ```sh  
-python src/inc/run_neural_compressor_conversion.py --save_model_path  ./model/intel/checkpoint.tar  --config  ./src/inc/deploy.yaml   --outpath ./model/intel/inc_compressed_model/output -i 0
+python $WORKSPACE/src/inc/run_neural_compressor_conversion.py --dataset_file $DATA_DIR --save_model_path  $OUTPUT_DIR/model/intel/checkpoint.tar  --config  $WORKSPACE/src/inc/deploy.yaml   --outpath $OUTPUT_DIR/model/intel/inc_compressed_model/output -i 0
+```
+
+> Quantized model will be saved  in `$OUTPUT_DIR/model/intel/inc_compressed_model/output` folder as `best_model.pt`
+
+**Step-2**: Inference using quantized Model
 
 ```
-> Quantized model will be saved by default in `./model/intel/inc_compressed_model/output` folder as `best_model.pt`
-
-Step-2: Inferencing using quantized Model
-
-```
-usage: run_inference.py [-h] [--intel I] [--batch-size B] --save_model_path SAVE_MODEL_PATH --data_path DATA_PATH
+usage: run_inference.py [-h] [--batch-size B] --save_model_path SAVE_MODEL_PATH --data_path DATA_PATH
 
 Inference on test images with FP32/INT8 model
 
 optional arguments:
   -h, --help            show this help message and exit
-  --intel I, -i I       Intel Optimizations for pytorch, default value 0
   --batch-size B, -b B  Batch size
   --save_model_path SAVE_MODEL_PATH, -m SAVE_MODEL_PATH
                         give the directory of the trained checkpoint.
   --data_path DATA_PATH, -d DATA_PATH
                         give the directory of test data folder.
-
 ```
+
 **Command to run inference on quantized model**
+
+[//]: # (capture: baremetal)
+
 ```sh
-OMP_NUM_THREADS=4 KMP_BLOCKTIME=50 python src/run_inference.py -i 1 -b 1  --save_model_path ./model/intel/inc_compressed_model/output/best_model.pt  --data_path ./data/test
+OMP_NUM_THREADS=4 KMP_BLOCKTIME=50 
+python $WORKSPACE/src/run_inference.py -b 1  --save_model_path $OUTPUT_DIR/model/intel/inc_compressed_model/output/best_model.pt  --data_path $DATA_DIR/test
 
 ```
-####  Accuracy evalution of the above  model 
+### 6. Accuracy evaluation of the above  model 
 ```
-usage: run_evalution.py [-h] [--intel I] [--batch-size B] --save_model_path SAVE_MODEL_PATH --data_path DATA_PATH [--openvino OPENVINO]
+usage: run_evaluation.py [-h][--batch-size B] --save_model_path SAVE_MODEL_PATH --data_path DATA_PATH 
 
-Evaluting Accuracyon test images with FP32/INT8/OPENVINO model
+Evaluating Accuracy on test images with FP32/INT8 model
 
 optional arguments:
   -h, --help            show this help message and exit
-  --intel I, -i I       Intel Optimizations for pytorch, default value 0
   --batch-size B, -b B  Batch size
   --save_model_path SAVE_MODEL_PATH, -m SAVE_MODEL_PATH
                         give the directory of the trained checkpoint
   --data_path DATA_PATH, -d DATA_PATH
                         give the directory of the test folder
-  --openvino OPENVINO, -o OPENVINO
-                        please ensble this flag only openvino env
-
   ```
 
 **Command to execute**
 
+[//]: # (capture: baremetal)
 ```sh
- python src/run_evalution.py  -i 1 --batch-size 1 --save_model_path ./model/intel/inc_compressed_model/output/best_model.pt  --data_path ./data/test -o 0
-
+ python $WORKSPACE/src/run_evaluation.py --batch-size 1 --save_model_path $OUTPUT_DIR/model/intel/inc_compressed_model/output/best_model.pt  --data_path $DATA_DIR/test
 ```
->**Note**: Above inference script can be run in Intel® environment using different batch sizes "-b":{1/8/16/32}<br>
-### 6. Conversion to OpenVINO™ FPIR from trained models using Intel® Distribution of OpenVINO™ Toolkit
+>**Note**: Above inference script can be run using different batch sizes "-b":{1/8/16/32}<br>
 
-When it comes to the deployment of this model on edge devices, with less computing and memory resources, we further need to explore options for quantizing and compressing the model which brings out the same level of accuracy and efficient utilization of underlying computing resources. Intel® Distribution of OpenVINO™ Toolkit facilitates the optimization of a deep learning model from a framework and deployment using an inference engine on such computing platforms based on Intel hardware accelerators. Below section covers the steps to use this toolkit for the model quantization and measure its performance.
 
-**Intel® Distribution of OpenVINO™ Intermediate Representation (IR) conversion** <br>
-Below are the steps to convert PyTorch trained checkpoint to  PyTorch onnx model and PyTorch onnx model to OpenVINO IR using model optimizer.
+### Clean Up Bare Metal
 
-*Environment Setup*
+Follow these steps to restore your `$WORKSPACE` directory to an initial step. Please note that all downloaded dataset files, conda environment, and logs created by the workflow will be deleted. Before executing next steps back up your important files.
 
-Intel® Distribution of OpenVINO™ is installed in openvino-satellite environment. 
 
-**Note**: Before setting up openvino-satellite environment please deactivate existing one by executing below
-```sh
-Conda deactivate
-
+```bash
+conda deactivate
+conda env remove -n structural_damage_intel
+rm -rf $DATA_DIR/*
+rm -rf $OUTPUT_DIR/*
 ```
-```sh
-conda env create -f env/openvino_pot/openvino-satellite.yml
-```
-**Activate openvino-satellite environment**
-```sh
-conda activate openvino-satellite
 
-```
-**Command to convert onnx model**
+Remove repository
+
 
 ```sh
-python src/openvino/onnx_model_conversion.py -m  ./model/intel/checkpoint.tar  -output ./model
-
+rm -rf $WORKSPACE
 ```
 
-**Command to create Intel® Distribution of OpenVINO™ FPIR model**
+## Expected Outputs
 
-```sh
-mo  --input_model model/unet_model.onnx  --output_dir ./model/openvino_fpir/openvino
-
-```
-
-**Note** -  The above step will generate `unet_model.bin` and `unet_model.xml` as output in `model/openvino_fpir/openvino` which can be used with OpenVINO inference application. Default precision is FP32.
-
-
-#### Accuracy evalution of the above unet_model.xml model (OpenVINO™ FPIR) 
-```
-usage: run_evalution.py [-h] [--intel I] [--batch-size B] --save_model_path SAVE_MODEL_PATH --data_path DATA_PATH [--openvino OPENVINO]
-
-Evaluting Accuracyon test images with FP32/INT8/OPENVINO model
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --intel I, -i I       Intel Optimizations for pytorch, default value 0
-  --batch-size B, -b B  Batch size
-  --save_model_path SAVE_MODEL_PATH, -m SAVE_MODEL_PATH
-                        give the directory of the trained checkpoint
-  --data_path DATA_PATH, -d DATA_PATH
-                        give the directory of the test folder
-  --openvino OPENVINO, -o OPENVINO
-                        please ensble this flag only openvino env
-
-  ```
-
-**Command to execute**
-
-```sh
- python src/run_evalution.py  -i 1 --batch-size 1 --save_model_path <unet_model.xml path>  --data_path ./data/test -o 1
+A successful execution of **`run_modeltraining.py`** should return similar results as shown below:
 
 ```
-
-
-<br>**Running inference using Intel® Distribution of OpenVINO™**<br>Command to perform inference using Intel® Distribution of OpenVINO™. The model needs to be converted to IR format .
-
-*Pre-requisites*
--  Intel® Distribution of OpenVINO™ Toolkit
--  Intel® Distribution of OpenVINO IR converted FP32/16 precision model
-
-
-
-**Performance Benchmarking of full precision (FP32) Model**<br>Use the below command to run the benchmark tool for the FPIR model generated using this codebase to assess severity of disaster damage. 
-
-```sh
-benchmark_app -m ./model/openvino_fpir/openvino/unet_model.xml  -api async -niter 120 -nireq 1 -b 1 -nstreams 1 -nthreads 8
-
-
-benchmark_app -m ./model/openvino_fpir/openvino/unet_model.xml  -api async -niter 120 -nireq 1 -b 8 -nstreams 1 -nthreads 8
-
-benchmark_app -m ./model/openvino_fpir/openvino/unet_model.xml  -api async -niter 120 -nireq 1 -b 16 -nstreams 1 -nthreads 8
-
-
-benchmark_app -m ./model/openvino_fpir/openvino/unet_model.xml   -api async -niter 120 -nireq 1 -b 32 -nstreams 1 -nthreads 8
-
+Train Path exists :  True
+The loaded checkpoint path is : ./output/model/intel/checkpoint
+IPEX optimization enabled
+Starting Training Loop...100%|█████████████████████████████████████| 167/167 [16:10<00:00,  5.81s/it]
+Epoch :  1  Loss :  135.68328762054443  Dice :  0.47691100684111704  IoU :  0.31781334505823555 Accuracy :  0.8753160963991206
+100%|█████████████████████████████████████| 167/167 [15:57<00:00,  5.73s/it]
+Epoch :  2  Loss :  85.04867482185364  Dice :  0.6430774745113121  IoU :  0.47742763286579154 Accuracy :  0.9299428182209801
+100%|█████████████████████████████████████| 167/167 [15:54<00:00,  5.72s/it]
+Epoch :  3  Loss :  65.01880678534508  Dice :  0.7372800868428396  IoU :  0.5889394361815766 Accuracy :  0.932552528000639
+100%|█████████████████████████████████████| 167/167 [15:36<00:00,  5.61s/it]
+Epoch :  4  Loss :  54.80323699116707  Dice :  0.7942062284418209  IoU :  0.6647021527775747 Accuracy :  0.9341242175378252
+100%|█████████████████████████████████████| 167/167 [15:38<00:00,  5.62s/it]
+Epoch :  5  Loss :  49.47170490026474  Dice :  0.8244725822688577  IoU :  0.7083044330516975 Accuracy :  0.9347563551333613
+TOTAL TIME TAKEN FOR TRAINING IN SECONDS -->  4759.732705593109
+100%|███████████████████████████████████████| 34/34 [01:55<00:00,  3.40s/it]
+Test Dice :  0.8456191262778114  IoU :  0.7409885560764986  Acc :  0.9418604233685658
 ```
 
+A successful execution of **`run_hyperparameter.py`** should return similar results as shown below:
 
-### Observations
-This section covers the training & inferencing time comparison between Stock PyTorch v1.12.0 and Intel® Extension for PyTorch v1.13.0 for this model building. The accuracy of the models (both Stock and Intel®) during Training and Hyperparameter tuning is upto 90%.
+```
+Train Path exists :  True
+Loaded check point path is : ./output/model/intel/checkpoint
+Loaded path is correct : ./output/model/intel/checkpoint
+IPEX optimization enabled
+Total number of fits =  6
+Starting Training Loop...
+Current fit is at  0
+Current fit parameters --> epochs= 1  learning rate= 0.001  optimizer= Adam
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 167/167 [15:54<00:00,  5.72s/it]Epoch :  1  Loss :  37.30476674437523  Dice :  0.7858702888388833  IoU :  0.6678299364929428 Accuracy :  0.8791817038834927
+Current fit is at  1
+Current fit parameters --> epochs= 1  learning rate= 0.001  optimizer= adadelta
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 167/167 [15:57<00:00,  5.73s/it]
+Epoch :  1  Loss :  19.134905885905027  Dice :  0.8686623359154798  IoU :  0.7806195702381477 Accuracy :  0.8969419216681384
+Current fit is at  2
+Current fit parameters --> epochs= 1  learning rate= 0.001  optimizer= rmsprop
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 167/167 [15:32<00:00,  5.58s/it]
+Epoch :  1  Loss :  17.538512494415045  Dice :  0.8782219322855601  IoU :  0.7961556129826757 Accuracy :  0.8879555742183847
+Current fit is at  3
+Current fit parameters --> epochs= 1  learning rate= 1e-05  optimizer= Adam
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 167/167 [15:49<00:00,  5.68s/it]
+Epoch :  1  Loss :  15.595378741621971  Dice :  0.8886073456552928  IoU :  0.8120814262036078 Accuracy :  0.9005215315523738
+Current fit is at  4
+Current fit parameters --> epochs= 1  learning rate= 1e-05  optimizer= adadelta
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 167/167 [15:44<00:00,  5.66s/it]
+Epoch :  1  Loss :  15.527766481041908  Dice :  0.8876683098113466  IoU :  0.8101579015126485 Accuracy :  0.8960213784924046
+Current fit is at  5
+Current fit parameters --> epochs= 1  learning rate= 1e-05  optimizer= rmsprop
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 167/167 [15:34<00:00,  5.60s/it]
+Epoch :  1  Loss :  15.322568694129586  Dice :  0.8897549595661506  IoU :  0.8138119278553717 Accuracy :  0.8988388902888803
+TOTAL TIME TAKEN FOR TRAINING IN SECONDS -->  5673.136041164398
+```
 
-#### Training and Hyperparameter_tuning  benchmarking results
-
-![image](assets/Training.png)
-
-<br>**Key Takeaways**<br>
-
--  Training time speedup with Intel® Extension for PyTorch v1.13.0 FP32 Model shows up to 1.14x against Stock Pytorch v1.12.0 FP32 Model.
-
-#### Inference benchmarking results
-
-![image](assets/inference.png)
-<br>**Key Takeaways**<br>
-
--  Real-time prediction time speedup with Intel® Extension for PyTorch v1.13.0 FP32 Model shows up to 1.25x against Stock PyTorch v1.12.0 FP32 Model
--  Batch prediction time speedup with Intel® Extension for PyTorch v1.13.0 FP32 Model shows up to 1.32x against Stock PyTorch v1.12.0 FP32 Model
--  Intel® Neural Compressor quantization offers real-time prediction time speedup up to  2.45x against Stock PyTorch v1.12.0  FP32 model
--  Intel® Neural Compressor quantization offers batch prediction time speedup up to 2.40x against Stock PyTorch v1.12.0 FP32 model.
--  Accuracy drop of 0.01% is observed.
-
-![image](assets/openvino.png)
-<br>**Key Takeaways**<br>
--  Intel® Distribution of OpenVINO FP32 model offers real-time prediction time speedup up to  1.47x against Stock PyTorch v1.12.0  FP32 model
--  Intel® Distribution of OpenVINO FP32 model offers batch prediction time speedup up to 1.63x against Stock PyTorch v1.12.0 FP32 model.
-
-#### Conclusion
-To build an **instance image segmentation model** to assess the severity of damage, machine learning developers will need to train models for substantial amount of dataset. The ability to accelerate training will allow them to train more frequently and achieve better accuracy. Faster inferencing speed will enable them to execute prediction in real-time as well as offline batch processing. This reference kit implementation provides a performance-optimized approach for developing an optimal instance image segmentation model that can be utilized on satellite image processing to evaluate the satellite images for disaster severity assessment.
+A successful execution of **`run_inference.py`** should return similar results as shown below:
 
 
+```
+IPEX Optimizations Enabled
+Model_warmup_initiated
+Warm up completed for this inference run
+Time Taken for Inferencing  1  Images is ==> 0.22965717315673828
+Time Taken for Inferencing  1  Images is ==> 0.22973346710205078
+Time Taken for Inferencing  1  Images is ==> 0.22956085205078125
+Time Taken for Inferencing  1  Images is ==> 0.22980380058288574
+.
+.
+.
+```
 
-#### Notices & Disclaimers
-Performance varies by use, configuration, and other factors. Learn more on the [Performance Index site](https://edc.intel.com/content/www/us/en/products/performance/benchmarks/overview/). 
-Performance results are based on testing as of dates shown in configurations and may not reflect all publicly available updates.  See backup for configuration details.  No product or component can be absolutely secure. 
-Your costs and results may vary. Intel technologies may require enabled hardware, software, or service activation.
+A successful execution of **`run_evaluation.py`** should return similar results as shown below:
 
-© Intel Corporation.  Intel, the Intel logo, and other Intel marks are trademarks of Intel Corporation or its subsidiaries.  Other names and brands may be claimed as the property of others.  
 
-# Appendix
+```
+IPEX Optimizations Enabled
+Model_warmup_initiated
+Warm up completed for this Accuracy test
+Evaluating the accuracy
+100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 200/200 [01:28<00:00,  2.26it/s]
+Test Dice :  0.843279727846384  IoU :  0.7376393972337246  Acc :  0.9412681198120117
+```
 
-### Running on Windows
+A successful execution of **`run_neural_compressor_conversion.py`** should return similar results as shown below:
 
-The original reference kits commands were built using a Linux based system.  In order to run these commands on Windows, go to Start and open WSL.  The Linux instructions provided can then be run in the WSL window starting from the git clone instructions. If WSL is not installed you can [install WSL](https://learn.microsoft.com/en-us/windows/wsl/install).
 
-> **Note** If WSL is installed and not opening, goto Start ---> Turn Windows feature on or off and make sure Windows Subsystem for Linux is checked. Restart the system after enabling it for the changes to reflect.
+```
+Loaded_FP32model_path_is ./output/model/intel/checkpoint.tar
+Loaded Weights for Inferencing...
+Quantization will be done without IPEX Optimizations Enabled
+2023-12-23 00:51:22 [WARNING] Force convert framework model to neural_compressor model.
+2023-12-23 00:51:22 [INFO] Attention Blocks: 0
+2023-12-23 00:51:22 [INFO] FFN Blocks: 0
+2023-12-23 00:51:22 [INFO] Pass query framework capability elapsed time: 162.61 ms
+2023-12-23 00:51:22 [INFO] Adaptor has 2 recipes.
+2023-12-23 00:51:22 [INFO] 0 recipes specified by user.
+2023-12-23 00:51:22 [INFO] 0 recipes require future tuning.
+2023-12-23 00:51:22 [INFO] Get FP32 model baseline.
+Loaded model Accuracy
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 20/20 [01:33<00:00,  4.68s/it]
+Test Dice :  0.8432797253131866  IoU :  0.7376393854618073  Acc :  0.9412681198120119
+2023-12-23 00:52:56 [INFO] Save tuning history to ./nc_workspace/2023-12-23_00-51-21/./history.snapshot.
+2023-12-23 00:52:56 [INFO] FP32 baseline is: [Accuracy: 0.9413, Duration (seconds): 94.1782]
+2023-12-23 00:52:57 [INFO] Fx trace of the entire model failed, We will conduct auto quantization
+2023-12-23 00:54:08 [INFO] |*****Mixed Precision Statistics*****|
+2023-12-23 00:54:08 [INFO] +---------------------+-------+------+
+2023-12-23 00:54:08 [INFO] |       Op Type       | Total | INT8 |
+2023-12-23 00:54:08 [INFO] +---------------------+-------+------+
+2023-12-23 00:54:08 [INFO] | quantize_per_tensor |   14  |  14  |
+2023-12-23 00:54:08 [INFO] |      ConvReLU2d     |   18  |  18  |
+2023-12-23 00:54:08 [INFO] |      dequantize     |   14  |  14  |
+2023-12-23 00:54:08 [INFO] |   ConvTranspose2d   |   4   |  4   |
+2023-12-23 00:54:08 [INFO] |        Conv2d       |   1   |  1   |
+2023-12-23 00:54:08 [INFO] +---------------------+-------+------+
+2023-12-23 00:54:08 [INFO] Pass quantize model elapsed time: 71564.5 ms
+Loaded model Accuracy
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 20/20 [01:32<00:00,  4.64s/it]
+Test Dice :  0.8432797253131866  IoU :  0.7376393854618073  Acc :  0.9412681198120119
+2023-12-23 00:55:41 [INFO] Tune 1 result is: [Accuracy (int8|fp32): 0.9413|0.9413, Duration (seconds) (int8|fp32): 93.3622|94.1782], Best tune result is: [Accuracy: 0.9413, Duration (seconds): 93.3622]
+2023-12-23 00:55:41 [INFO] |**********************Tune Result Statistics**********************|
+2023-12-23 00:55:41 [INFO] +--------------------+----------+---------------+------------------+
+2023-12-23 00:55:41 [INFO] |     Info Type      | Baseline | Tune 1 result | Best tune result |
+2023-12-23 00:55:41 [INFO] +--------------------+----------+---------------+------------------+
+2023-12-23 00:55:41 [INFO] |      Accuracy      | 0.9413   |    0.9413     |     0.9413       |
+2023-12-23 00:55:41 [INFO] | Duration (seconds) | 94.1782  |    93.3622    |     93.3622      |
+2023-12-23 00:55:41 [INFO] +--------------------+----------+---------------+------------------+
+2023-12-23 00:55:41 [INFO] Save tuning history to ./nc_workspace/2023-12-23_00-51-21/./history.snapshot.
+2023-12-23 00:55:41 [INFO] Specified timeout or max trials is reached! Found a quantized model which meet accuracy goal. Exit.
+2023-12-23 00:55:41 [INFO] Save deploy yaml to ./nc_workspace/2023-12-23_00-51-21/deploy.yaml
+2023-12-23 00:55:41 [INFO] Save config file and weights of quantized model to ./output/model/intel/inc_compressed_model/output.
+```
+## Summary and Next Steps
 
-### Experiment Setup
-- Testing performed on: January 2023
-- Testing performed by: Intel Corporation
-- Configuration Details: Azure Standard_D8_V5 (Intel® Xeon® Platinum 8370C CPU @ 2.80GHz), 1 Socket, 4 Cores per Socket, 2 Threads per Core, Turbo:On, Total Memory: 32 GB, OS: Ubuntu 20.04, Kernel: Linux 5.13.0-1031-azure , Software: PyTorch v1.13, Intel® Extension for PyTorch* v1.13.0, Intel® Neural Compressor v2.0    
+Satellite image processing is a challenging task. This reference kit implementation provides a performance-optimized solution for image processing that can reduce the amount of data exchange between satellites and ground stations, as well as the time between data acquisition, insights generation, and response.
 
-| **Optimized for**:  | **Description**                                                                           |
-| :------------------ | :---------------------------------------------------------------------------------------- |
-| Platform            | Azure Standard D8_v5 : Intel Xeon Platinum 8370C (Ice Lake) @ 2.80GHz, 8 vCPU, 32GB memory |
-| Hardware            | CPU                                                                                       |
-| OS                  | Ubuntu 20.04                                                                              |
-| Software            | PyTorch v1.12, Intel® Extension for PyTorch* v1.13.0, Intel® Neural Compressor v2.0     |
-| What you will learn | Intel® oneAPI performance advantage over the stock versions                               |
+### Adapt to your dataset
+
+This reference use case can be easily deployed on a different or customized dataset by simply arranging the images for training and testing in the following folder structure:
+
+```
+data/xBD
+└------- train
+    ├    ├── images
+    │    ├── targets
+    │    ├── labels
+    │  
+    │
+    └----test
+         ├── images
+         ├── targets
+         ├── labels
+```
+
+### Conclusion
+To build an **instance image segmentation model** that can accurately evaluate the severity of damage, machine learning developers need to train the model with a significant amount of data. By accelerating the training process, developers can train the model more frequently and achieve better accuracy. Faster inferencing speed will allow the model to make predictions in real-time and offline batch processing. This reference kit implementation provides a performance-optimized approach for developing an optimal instance image segmentation model that can be used to evaluate satellite images for disaster severity assessment.
+
+## Learn More
+
+For more information about <workflow> or to read about other relevant workflow
+examples, see these guides and software resources:
+
+- [Intel® AI Analytics Toolkit (AI Kit)](https://www.intel.com/content/www/us/en/developer/tools/oneapi/ai-analytics-toolkit.html)
+- [Developer Catalog](https://developer.intel.com/aireferenceimplementations)
+- [Intel® Distribution for Python\*](https://www.intel.com/content/www/us/en/developer/tools/oneapi/distribution-for-python.html#gs.52te4z)
+- [Intel® Extension for PyTorch\*](https://github.com/intel/intel-extension-for-pytorch)
+- [Intel® Neural Compressor\*](https://github.com/intel/neural-compressor)
+
+## Support
+
+If you have any questions with this workflow, want help with troubleshooting, want to report a bug or submit enhancement requests, please submit a GitHub issue.
+
+## Appendix
+### References
+
+<a id="mvtec_ad_dataset">[1]</a> GmbH, M. (2023). MVTec Anomaly Detection Dataset: MVTec Software. Retrieved 5 September 2023, from https://www.mvtec.com/company/research/datasets/mvtec-ad
 
 
 ### Known Issues
@@ -656,7 +617,7 @@ The original reference kits commands were built using a Linux based system.  In 
 1. Environment Creation Issue : Could not build wheels for pycocotools
 
     **Issue:**
-      When creating an intel environment using `intel-satellite` 
+      When creating an intel environment using `intel_env` 
       ```
       ERROR: Could not build wheels for pycocotools, which is required to install pyproject.toml-based projects
       ```
@@ -666,8 +627,7 @@ The original reference kits commands were built using a Linux based system.  In 
     Install gcc.  For Ubuntu, this will be: 
 
       ```bash
-      apt install gcc
-      sudo apt install libglib2.0-0
+      sudo apt install gcc libglib2.0-0
       ```
 
 2. ImportError: libGL.so.1: cannot open shared object file: No such file or directory
@@ -689,6 +649,11 @@ The original reference kits commands were built using a Linux based system.  In 
      sudo apt install libglib2.0-0
       ```
 
+## Disclaimers
 
+<a id="legal_disclaimer"></a>
 
-
+- To the extent that any public or non-Intel datasets or models are referenced by or accessed using tools or code on this site those datasets or models are provided by the third party indicated as the content source. Intel does not create the content and does not warrant its accuracy or quality. By accessing the public content, or using materials trained on or with such content, you agree to the terms associated with that content and that your use complies with the applicable license.
+- Intel expressly disclaims the accuracy, adequacy, or completeness of any such public content, and is not liable for any errors, omissions, or defects in the content, or for any reliance on the content. Intel is not liable for any liability or damages relating to your use of public content.
+- Your costs and results may vary. Intel technologies may require enabled hardware, software, or service activation.
+- © Intel Corporation.  Intel, the Intel logo, and other Intel marks are trademarks of Intel Corporation or its subsidiaries.  Other names and brands may be claimed as the property of others.  

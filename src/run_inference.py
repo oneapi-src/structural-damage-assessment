@@ -26,11 +26,11 @@ import torchvision.transforms.functional as TF
 from unet import UNet
 import numpy as np
 from tqdm import tqdm
-
+import intel_extension_for_pytorch as ipex
 
 def dice_index(input, target):
     '''
-    Calcualtes the Dice Coefficeint for the 2 specified images
+    Calculates the Dice Coefficient for the 2 specified images
 
     Arguments:
     pred  --  The predicted image by the neural network
@@ -42,7 +42,7 @@ def dice_index(input, target):
     smooth = 1.  # Factor to prevent NaN and maintain smoothness
     pred = nn.Softmax2d()(input)  # Apply Softmax since the network outputs the logits
     target = target.unsqueeze(1)
-    target = torch.cat((target==0, target==1, target==2, target==3), dim=1).type(torch.float)  # Accomodate all 3 channels
+    target = torch.cat((target==0, target==1, target==2, target==3), dim=1).type(torch.float)  # Accommodate all 3 channels
     intersection = (pred * target).sum(dim=(1,2,3))
     union = pred.sum(dim=(1,2,3)) + target.sum(dim=(1,2,3))
     return ((2. * intersection + smooth)/(union + smooth)).mean().item()
@@ -50,7 +50,7 @@ def dice_index(input, target):
 
 def IoU(input, target):
     '''
-    Calcualtes the IoU Coefficeint for the 2 specified images
+    Calculates the IoU Coefficient for the 2 specified images
 
     Arguments:
     pred  --  The predicted image by the neural network
@@ -62,7 +62,7 @@ def IoU(input, target):
     smooth = 1.  # Factor to prevent NaN and maintain smoothness
     pred = nn.Softmax2d()(input)  # Apply Softmax since the network outputs the logits
     target = target.unsqueeze(1)
-    target = torch.cat((target==0, target==1, target==2, target==3), dim=1).type(torch.float)  # Accomodate all 3 channels
+    target = torch.cat((target==0, target==1, target==2, target==3), dim=1).type(torch.float)  # Accommodate all 3 channels
     intersection = (pred * target).sum(dim=(1,2,3))
     union = pred.sum(dim=(1,2,3)) + target.sum(dim=(1,2,3)) - intersection
     return ((intersection + smooth)/(union + smooth)).mean().item()
@@ -78,7 +78,7 @@ class SegmentationDatasetLoader(object):
         Arguments:
         img_root_dir  --  Directory containing the input image files
         gt_root_dir   --  Directory containing the output  files
-        train  --  Variable tto differentiate between traning and test/val for data augmentation and transforms
+        train  --  Variable tto differentiate between training and test/val for data augmentation and transforms
 
         Returns:
         None
@@ -98,7 +98,7 @@ class SegmentationDatasetLoader(object):
 
     def __getitem__(self, idx):
         '''
-        Based on the input index, reads a filen and the corresponding target and outputs both as processed tensors to the net
+        Based on the input index, reads a file and the corresponding target and outputs both as processed tensors to the net
 
         Arguments:
         idx  --  The index of the dataframe row to be loaded
@@ -152,7 +152,6 @@ class SegmentationDatasetLoader(object):
 def get_args():
     ''' Args '''
     parser = argparse.ArgumentParser(description='Inference on  test images with FP32/INT8 model ')
-    parser.add_argument('--intel', '-i', metavar='I', type=int, default=0, help='Intel Optimizations for pytorch, default value 0')
     parser.add_argument('--batch-size', '-b', dest='batch_size', metavar='B', type=int, default=1, help='Batch size')
     parser.add_argument('--save_model_path','-m',type=str,required=True, default=None, help='give the directory of the trained checkpoint.')
     parser.add_argument('--data_path','-d',type=str,required=True, default=None, help='give the directory of the test data folder.')
@@ -162,12 +161,9 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
 
-    CUDA = torch.cuda.is_available()
-    print("CUDA :: ", CUDA)
-    device = torch.device("cuda" if CUDA else "cpu")
+    device = torch.device("cpu")
 
     BATCH = args.batch_size
-    INTEL = args.intel
     MODEL_PATH=args.save_model_path
     DATAPATH=args.data_path
     # Loading test data
@@ -192,11 +188,8 @@ if __name__ == '__main__':
         segmentation_model.eval()
         segmentation_model=segmentation_model.to(memory_format=torch.channels_last)
  
-        # For IPEX
-        if INTEL:
-                import intel_extension_for_pytorch as ipex
-                segmentation_model = ipex.optimize(segmentation_model)
-                print("IPEX Optimizations Enabled")
+        segmentation_model = ipex.optimize(segmentation_model)
+        print("IPEX Optimizations Enabled")
     else:
         print("Model format not supported")
     
@@ -228,7 +221,3 @@ if __name__ == '__main__':
                                 start_time = time.time()
                                 output_test = segmentation_model(img_test)
                                 print("Time Taken for Inferencing ", BATCH, " Images is ==>",time.time()-start_time )
-                                
-
-
-      

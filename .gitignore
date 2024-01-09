@@ -1,0 +1,9 @@
+output
+src/inc/unet/__pycache__/
+src/unet/__pycache__/
+nc_workspace/
+hyperparameter.txt
+data/xBD/test_images_labels_targets.tar
+data/xBD/train_images_labels_targets.tar
+data/xBD/train
+data/xBD/test

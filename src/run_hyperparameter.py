@@ -29,15 +29,14 @@ from unet import UNet
 import cv2
 import numpy as np
 from sklearn.metrics import accuracy_score
+import intel_extension_for_pytorch as ipex
 
 
-CUDA = torch.cuda.is_available()
-print("CUDA :: ", CUDA)
-device = torch.device("cuda" if CUDA else "cpu")
+device = torch.device("cpu")
 
 
 if __name__ == "__main__":
-    # The main function body which takens the varilable number of arguments
+    # The main function body which taken the variable number of arguments
 
     parser = argparse.ArgumentParser()
 
@@ -46,7 +45,7 @@ if __name__ == "__main__":
                         type=int,
                         required=False,
                         default=6,
-                        help='batch size exampes: 6, 12')
+                        help='batch size examples: 6, 12')
 
     parser.add_argument('--dataset_file',
                         '--dataset_file',
@@ -54,14 +53,6 @@ if __name__ == "__main__":
                         required=True,
                         default=None,
                         help='dataset file for training')
-
-    parser.add_argument('-i',
-                        '--intel',
-                        type=int,
-                        required=False,
-                        default=0,
-                        help='use 1 to enable intel PyTorch optimizations,  \
-                            default is 0')
 
     parser.add_argument('--save_model_path',
                         '--save_model_path',
@@ -83,11 +74,8 @@ if __name__ == "__main__":
     if FLAGS.save_model_path is None:
         print("Please provide path to save the model...\n")
         sys.exit(1)
-    else:
-        if FLAGS.intel != 1:
-            save_model_path = FLAGS.save_model_path + "/stock/"
-        else:
-            save_model_path = FLAGS.save_model_path + "/intel/"
+
+    save_model_path = FLAGS.save_model_path + "/intel/"
 
     # Handle Exceptions for the user entries
     try:
@@ -98,9 +86,7 @@ if __name__ == "__main__":
         print("Please check the Path provided!")
         sys.exit()
 
-
-    CUDA = torch.cuda.is_available()
-    device = torch.device("cuda" if CUDA else "cpu")
+    device = torch.device("cpu")
 
 
     image_directory = datadir + "/train/images"
@@ -113,7 +99,7 @@ if __name__ == "__main__":
     test_image_directory = datadir + "/test/images"
 
 
-    #  Default Hyper Parameters & Network deatils ,Optimizer
+    #  Default Hyper Parameters & Network details ,Optimizer
     hidden = 64
     kernel_size = 3
     padding = 1
@@ -136,7 +122,7 @@ if __name__ == "__main__":
     print("Loaded path is correct :",TEST_PATH)
 
     # # Define the U-Net Generator Model
-    # # Instatiate the Model, Optimizer and Losses
+    # # Insatiate the Model, Optimizer and Losses
     segmentation_model = UNet(n_channels=3, n_classes=3, bilinear=False)
     # Setup Optimizer
     optimizer = torch.optim.Adam(segmentation_model.parameters(), lr = learning_rate)
@@ -144,14 +130,9 @@ if __name__ == "__main__":
     criterion_cross = nn.CrossEntropyLoss(weight=torch.tensor([5,1,5], dtype=torch.float).to(device))
     segmentation_model.train()
 
-    if FLAGS.intel == 1:
-
-        import intel_extension_for_pytorch as ipex
-
-        segmentation_model = segmentation_model.to(memory_format=torch.channels_last)
-
-        segmentation_model, optimizer = ipex.optimize(segmentation_model, optimizer=optimizer)
-        print("IPEX optimization enabled")
+    segmentation_model = segmentation_model.to(memory_format=torch.channels_last)
+    segmentation_model, optimizer = ipex.optimize(segmentation_model, optimizer=optimizer)
+    print("IPEX optimization enabled")
 
     # Defing tuning parameters
     options = {
@@ -174,7 +155,7 @@ if __name__ == "__main__":
 
 def dice_index(input, target):
     '''
-    Calcualtes the Dice Coefficeint for the 2 specified images
+    Calculates the Dice Coefficient for the 2 specified images
 
     Arguments:
     pred  --  The predicted image by the neural network
@@ -186,7 +167,7 @@ def dice_index(input, target):
     smooth = 1.  # Factor to prevent NaN and maintain smoothness
     pred = nn.Softmax2d()(input)  # Apply Softmax since the network outputs the logits
     target = target.unsqueeze(1)
-    target = torch.cat((target==0, target==1, target==2), dim=1).type(torch.float)  # Accomodate all 3 channels
+    target = torch.cat((target==0, target==1, target==2), dim=1).type(torch.float)  # Accommodate all 3 channels
     intersection = (pred * target).sum(dim=(1,2,3))
     union = pred.sum(dim=(1,2,3)) + target.sum(dim=(1,2,3))
     return ((2. * intersection + smooth)/(union + smooth)).mean().item()
@@ -194,7 +175,7 @@ def dice_index(input, target):
 
 def IoU(input, target):
     '''
-    Calcualtes the IoU Coefficeint for the 2 specified images
+    Calculates the IoU Coefficient for the 2 specified images
 
     Arguments:
     pred  --  The predicted image by the neural network
@@ -206,7 +187,7 @@ def IoU(input, target):
     smooth = 1.  # Factor to prevent NaN and maintain smoothness
     pred = nn.Softmax2d()(input)  # Apply Softmax since the network outputs the logits
     target = target.unsqueeze(1)
-    target = torch.cat((target==0, target==1, target==2), dim=1).type(torch.float)  # Accomodate all 3 channels
+    target = torch.cat((target==0, target==1, target==2), dim=1).type(torch.float)  # Accommodate all 3 channels
     intersection = (pred * target).sum(dim=(1,2,3))
     union = pred.sum(dim=(1,2,3)) + target.sum(dim=(1,2,3)) - intersection
     return ((intersection + smooth)/(union + smooth)).mean().item()
@@ -223,7 +204,7 @@ class SegmentationDatasetLoader(object):
         Arguments:
         img_root_dir  --  Directory containing the input image files
         gt_root_dir   --  Directory containing the output label files
-        train  --  Variable tto differentiate between traning and test/val for data augmentation and transforms
+        train  --  Variable tto differentiate between training and test/val for data augmentation and transforms
 
         Returns:
         None
@@ -243,7 +224,7 @@ class SegmentationDatasetLoader(object):
 
     def __getitem__(self, idx):
         '''
-        Based on the input index, reads a filen and the corresponding target and outputs both as processed tensors to the net
+        Based on the input index, reads a file and the corresponding target and outputs both as processed tensors to the net
 
         Arguments:
         idx  --  The index of the dataframe row to be loaded
@@ -363,3 +344,4 @@ for combination in p_combinations:
         print("Epoch : ", epoch + 1, " Loss : ", loss_epoch, " Dice : ", dice/iterations, " IoU : ", iou/iterations, "Accuracy : ", acc_train/iterations)
 
 print("TOTAL TIME TAKEN FOR TRAINING IN SECONDS --> ", time.time()-start_train_time)
+

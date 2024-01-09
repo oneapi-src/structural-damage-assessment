@@ -27,12 +27,12 @@ from unet import UNet
 import numpy as np
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score
-
+import intel_extension_for_pytorch as ipex
 
 
 def dice_index(input, target):
     '''
-    Calcualtes the Dice Coefficeint for the 2 specified images
+    Calculates the Dice Coefficient for the 2 specified images
 
     Arguments:
     pred  --  The predicted image by the neural network
@@ -52,7 +52,7 @@ def dice_index(input, target):
 
 def IoU(input, target):
     '''
-    Calcualtes the IoU Coefficeint for the 2 specified images
+    Calculates the IoU Coefficient for the 2 specified images
 
     Arguments:
     pred  --  The predicted image by the neural network
@@ -64,7 +64,7 @@ def IoU(input, target):
     smooth = 1.  # Factor to prevent NaN and maintain smoothness
     pred = nn.Softmax2d()(input)  # Apply Softmax since the network outputs the logits
     target = target.unsqueeze(1)
-    target = torch.cat((target==0, target==1, target==2, target==3), dim=1).type(torch.float)  # Accomodate all 3 channels
+    target = torch.cat((target==0, target==1, target==2, target==3), dim=1).type(torch.float)  # Accommodate all 3 channels
     intersection = (pred * target).sum(dim=(1,2,3))
     union = pred.sum(dim=(1,2,3)) + target.sum(dim=(1,2,3)) - intersection
     return ((intersection + smooth)/(union + smooth)).mean().item()
@@ -80,7 +80,7 @@ class SegmentationDatasetLoader(object):
         Arguments:
         img_root_dir  --  Directory containing the input image files
         gt_root_dir   --  Directory containing the output  files
-        train  --  Variable tto differentiate between traning and test/val for data augmentation and transforms
+        train  --  Variable tto differentiate between training and test/val for data augmentation and transforms
 
         Returns:
         None
@@ -100,7 +100,7 @@ class SegmentationDatasetLoader(object):
 
     def __getitem__(self, idx):
         '''
-        Based on the input index, reads a filen and the corresponding target and outputs both as processed tensors to the net
+        Based on the input index, reads a file and the corresponding target and outputs both as processed tensors to the net
 
         Arguments:
         idx  --  The index of the dataframe row to be loaded
@@ -153,24 +153,19 @@ class SegmentationDatasetLoader(object):
 
 def get_args():
     ''' Args '''
-    parser = argparse.ArgumentParser(description='Evaluting Accuracyon test images with FP32/INT8/OPENVINO model ')
-    parser.add_argument('--intel', '-i', metavar='I', type=int, default=0, help='Intel Optimizations for pytorch, default value 0')
+    parser = argparse.ArgumentParser(description='Evaluating Accuracy on test images with FP32/INT8 ')
     parser.add_argument('--batch-size', '-b', dest='batch_size', metavar='B', type=int, default=1, help='Batch size')
     parser.add_argument('--save_model_path','-m',type=str,required=True, default=None, help='give the directory of the trained checkpoint')
     parser.add_argument('--data_path','-d',type=str,required=True, default=None, help='give the directory of test data folder')
-    parser.add_argument('--openvino','-o',type=int,required=False, default=0, help='please ensble this flag only openvino env ')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = get_args()
 
-    CUDA = torch.cuda.is_available()
-    print("CUDA :: ", CUDA)
-    device = torch.device("cuda" if CUDA else "cpu")
+    device = torch.device("cpu")
 
     BATCH = args.batch_size
-    INTEL = args.intel
     MODEL_PATH=args.save_model_path
     DATAPATH=args.data_path
     # Loading test data
@@ -182,43 +177,23 @@ if __name__ == '__main__':
     
     
    
-    if args.openvino==0 :
-        # Instantiate Model
-        segmentation_model = UNet(n_channels=3, n_classes=4, bilinear=False)
-        checkpoint = torch.load(MODEL_PATH, map_location=device)
-        if  '.tar' in MODEL_PATH:
-                segmentation_model.load_state_dict(checkpoint['model_state_dict'])
-        elif '.pt' in MODEL_PATH:
-                from neural_compressor.utils.pytorch import load
-                segmentation_model=load(MODEL_PATH,segmentation_model) 
-        
+    # Instantiate Model
+    segmentation_model = UNet(n_channels=3, n_classes=4, bilinear=False)
+    checkpoint = torch.load(MODEL_PATH, map_location=device)
+    if  '.tar' in MODEL_PATH:
+            segmentation_model.load_state_dict(checkpoint['model_state_dict'])
+    elif '.pt' in MODEL_PATH:
+            from neural_compressor.utils.pytorch import load
+            segmentation_model=load(MODEL_PATH,segmentation_model) 
+    
 
-        print("Loaded Weights for Inferencing...")
-        segmentation_model.eval()
-        segmentation_model=segmentation_model.to(memory_format=torch.channels_last)
- 
-        # For IPEX
-        if INTEL:
-                import intel_extension_for_pytorch as ipex
-                segmentation_model = ipex.optimize(segmentation_model)
-                print("IPEX Optimizations Enabled")
-    elif args.openvino==1:
-        print("Inference started with openvino xml model")
-        from openvino.runtime import Core, PartialShape
-        core = Core()
+    print("Loaded Weights for Inferencing...")
+    segmentation_model.eval()
+    segmentation_model=segmentation_model.to(memory_format=torch.channels_last)
 
 
-        # Step 1. Read a model in OpenVINO Intermediate Representation     
-        model = core.read_model(model=args.save_model_path)
-        print('Get input and output of model')
-        input_layer = model.input(0)
-        n_batch, channels, height, width = input_layer.shape
-        model.reshape([BATCH, channels, height, width])
-        compiled_model = core.compile_model(model=model, device_name="CPU")
-
-
-    else:
-        print("Model format not supported")
+    segmentation_model = ipex.optimize(segmentation_model)
+    print("IPEX Optimizations Enabled")
     
 
     loader = SegmentationDatasetLoader(test_image_directory, test_label_directory, train=False)
@@ -235,44 +210,25 @@ if __name__ == '__main__':
     
     
     # Accuracy prediction 
-    if args.openvino==0 :
-        with torch.no_grad():
+    with torch.no_grad():
 
-            for _ in range(2):
-
-                for img_test, label_test in test_iter:
-                    img_test, label_test = img_test.to(device), label_test.to(device)
-                    img_test = img_test.to(memory_format=torch.channels_last)
-                
-                    output_test = segmentation_model(img_test)
-            print("Warm up completed for this Accuracy test " )
-        print("Evaluting the accuracy")
-        with torch.no_grad():
-            for img_test, label_test in tqdm(test_iter):
-                img_test, label_test = img_test.to(device), label_test.to(device)
-            
-                output_test = segmentation_model(img_test)
-                # Metrics for the Testing
-                acc_test += accuracy_score(label_test.clone().detach().cpu().numpy().ravel(),  np.argmax(output_test.clone().detach().cpu().numpy(), axis=1).ravel())
-                dice_test += dice_index(output_test.clone().detach(), label_test.clone().detach())
-                iou_test  +=  IoU(output_test.clone().detach(), label_test.clone().detach())
-        print("Test Dice : ", dice_test/test_iterations, " IoU : ", iou_test/test_iterations, " Acc : ", acc_test/test_iterations)
-    else:
         for _ in range(2):
 
             for img_test, label_test in test_iter:
                 img_test, label_test = img_test.to(device), label_test.to(device)
                 img_test = img_test.to(memory_format=torch.channels_last)
-                output_test = compiled_model([img_test])[compiled_model.output(0)]
+            
+                output_test = segmentation_model(img_test)
         print("Warm up completed for this Accuracy test " )
-
-        print("Evaluting the accuracy")
+    print("Evaluating the accuracy")
+    with torch.no_grad():
         for img_test, label_test in tqdm(test_iter):
-                img_test, label_test = img_test.to(device), label_test.to(device)
-                output_test = compiled_model([img_test])[compiled_model.output(0)]
-                output_test=torch.from_numpy( output_test)
-                # Metrics for the Testing
-                acc_test += accuracy_score(label_test.clone().detach().cpu().numpy().ravel(),  np.argmax(output_test.clone().detach().cpu().numpy(), axis=1).ravel())
-                dice_test += dice_index(output_test.clone().detach(), label_test.clone().detach())
-        print("Test Dice : ", dice_test/test_iterations, " IoU : ", iou_test/test_iterations, " Acc : ", acc_test/test_iterations)
+            img_test, label_test = img_test.to(device), label_test.to(device)
+        
+            output_test = segmentation_model(img_test)
+            # Metrics for the Testing
+            acc_test += accuracy_score(label_test.clone().detach().cpu().numpy().ravel(),  np.argmax(output_test.clone().detach().cpu().numpy(), axis=1).ravel())
+            dice_test += dice_index(output_test.clone().detach(), label_test.clone().detach())
+            iou_test  +=  IoU(output_test.clone().detach(), label_test.clone().detach())
+    print("Test Dice : ", dice_test/test_iterations, " IoU : ", iou_test/test_iterations, " Acc : ", acc_test/test_iterations)
     

@@ -30,12 +30,12 @@ import cv2
 import numpy as np
 import pathlib
 from sklearn.metrics import accuracy_score
-
+import intel_extension_for_pytorch as ipex
 
 # Define function for input & Target specification
 def dice_index(input, target):
     '''
-    Calcualtes the Dice Coefficeint for the 2 specified images
+    Calculates the Dice Coefficient for the 2 specified images
 
     Arguments:
     pred  --  The predicted image by the neural network
@@ -67,7 +67,7 @@ def IoU(input, target):
     smooth = 1.  # Factor to prevent NaN and maintain smoothness
     pred = nn.Softmax2d()(input)  # Apply Softmax since the network outputs the logits
     target = target.unsqueeze(1)
-    target = torch.cat((target==0, target==1, target==2, target==3), dim=1).type(torch.float)  # Accomodate all 3 channels
+    target = torch.cat((target==0, target==1, target==2, target==3), dim=1).type(torch.float)  # Accommodate all 3 channels
     intersection = (pred * target).sum(dim=(1, 2, 3))
     union = pred.sum(dim=(1, 2, 3)) + target.sum(dim=(1, 2, 3)) - intersection
     return ((intersection + smooth)/(union + smooth)).mean().item()
@@ -87,7 +87,7 @@ class SegmentationDatasetLoader(object):
         Arguments:
         img_root_dir  --  Directory containing the input image files
         gt_root_dir   --  Directory containing the output label files
-        train  --  Variable tto differentiate between traning and test/val for data augmentation and transforms
+        train  --  Variable tto differentiate between training and test/val for data augmentation and transforms
 
         Returns:
         None
@@ -106,7 +106,7 @@ class SegmentationDatasetLoader(object):
 
     def __getitem__(self, idx):
         '''
-        Based on the input index, reads a filen and the corresponding target and outputs both as processed tensors to the net
+        Based on the input index, reads a file and the corresponding target and outputs both as processed tensors to the net
 
         Arguments:
         idx  --  The index of the dataframe row to be loaded
@@ -176,15 +176,6 @@ if __name__ == "__main__":
                         required=True,
                         default=None,
                         help='dataset file for training')
-
-    parser.add_argument('-i',
-                        '--intel',
-                        type=int,
-                        required=False,
-                        default=0,
-                        help='use 1 to enable intel model save, \
-                            default is 0')
-
     parser.add_argument('--save_model_path',
                         '--save_model_path',
                         type=str,
@@ -206,13 +197,9 @@ if __name__ == "__main__":
     if FLAGS.save_model_path is None:
         print("Please provide path to save the model...\n")
         sys.exit(1)
-    else:
-        if FLAGS.intel != 1:
-            save_model_path = FLAGS.save_model_path + "/stock/"
-            os.makedirs(save_model_path, exist_ok=True)
-        else:
-            save_model_path = FLAGS.save_model_path + "/intel/"
-            os.makedirs(save_model_path, exist_ok=True)
+
+    save_model_path = FLAGS.save_model_path + "/intel/"
+    os.makedirs(save_model_path, exist_ok=True)
 
     # Handle Exceptions for the user entries
     try:
@@ -224,9 +211,7 @@ if __name__ == "__main__":
         sys.exit()
 
 
-    CUDA = torch.cuda.is_available()
-    print("CUDA :: ", CUDA)
-    device = torch.device("cuda" if CUDA else "cpu")
+    device = torch.device("cpu")
 
     # Define of datapath
     image_directory = datadir + "/train/images"
@@ -269,12 +254,10 @@ if __name__ == "__main__":
     segmentation_model.train()
 
 
-    if FLAGS.intel == 1:
 
-        import intel_extension_for_pytorch as ipex
-        segmentation_model = segmentation_model.to(memory_format=torch.channels_last)
-        segmentation_model, optimizer = ipex.optimize(segmentation_model, optimizer=optimizer)
-        print("IPEX optimization enabled")
+    segmentation_model = segmentation_model.to(memory_format=torch.channels_last)
+    segmentation_model, optimizer = ipex.optimize(segmentation_model, optimizer=optimizer)
+    print("IPEX optimization enabled")
 
 
     # Instantiate the Training DataLoader and Data Iterator
@@ -284,8 +267,6 @@ if __name__ == "__main__":
     # Instantiate the Validation Data Loader and Data Iterator
     # val_dataset = SegmentationDatasetLoader(val_image_directory, val_gt_directory)
     # val_iter = torch.utils.data.DataLoader(val_dataset, batch_size=BATCH, shuffle=False)
-
-
 
     # Initiating Training
     loss_train = []
@@ -369,3 +350,4 @@ if __name__ == "__main__":
             dice_test += dice_index(output_test.clone().detach(), label_test.clone().detach())
             iou_test  +=  IoU(output_test.clone().detach(), label_test.clone().detach())
     print("Test Dice : ", dice_test/test_iterations, " IoU : ", iou_test/test_iterations, " Acc : ", acc_test/test_iterations)
+    
