@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2024 Intel Corporation
 # SPDX-License-Identifier: BSD-3-Clause
 # pylint: disable = R0402 , W0404 , W0622 , C0115 , R0205 , W0404 , C0411 , C0412 , W0611 , E0401, W0311, E1102 , E0213
 # flake8: noqa = E501
